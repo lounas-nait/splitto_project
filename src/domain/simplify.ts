@@ -1,34 +1,39 @@
 import type { Balances, Settlement } from './types';
 
+function findLargestCreditor(bal: Map<string, number>): [string, number] | null {
+  let best: [string, number] | null = null;
+  for (const [id, v] of bal) {
+    if (v > 0.001 && (best === null || v > best[1])) best = [id, v];
+  }
+  return best;
+}
+
+function findLargestDebtor(bal: Map<string, number>): [string, number] | null {
+  let best: [string, number] | null = null;
+  for (const [id, v] of bal) {
+    if (v < -0.001 && (best === null || v < best[1])) best = [id, v];
+  }
+  return best;
+}
+
 export function simplifyDebts(balances: Balances): Settlement[] {
   const settlements: Settlement[] = [];
-
-  // Copie mutable des balances en Map
   const bal = new Map<string, number>(Object.entries(balances));
 
-  const getCreditors = () =>
-    [...bal.entries()].filter(([, v]) => v > 0.001).sort((a, b) => b[1] - a[1]);
+  let creditor = findLargestCreditor(bal);
+  let debtor = findLargestDebtor(bal);
 
-  const getDebtors = () =>
-    [...bal.entries()].filter(([, v]) => v < -0.001).sort((a, b) => a[1] - b[1]);
-
-  let creditors = getCreditors();
-  let debtors = getDebtors();
-
-  while (creditors.length > 0 && debtors.length > 0) {
-    const [creditor, credit] = creditors[0];
-    const [debtor, debt] = debtors[0];
-
-    const amount = Math.min(credit, Math.abs(debt));
+  while (creditor && debtor) {
+    const amount = Math.min(creditor[1], Math.abs(debtor[1]));
     const rounded = Math.round(amount * 100) / 100;
 
-    settlements.push({ from: debtor, to: creditor, amount: rounded });
+    settlements.push({ from: debtor[0], to: creditor[0], amount: rounded });
 
-    bal.set(creditor, credit - amount);
-    bal.set(debtor, debt + amount);
+    bal.set(creditor[0], creditor[1] - amount);
+    bal.set(debtor[0], debtor[1] + amount);
 
-    creditors = getCreditors();
-    debtors = getDebtors();
+    creditor = findLargestCreditor(bal);
+    debtor = findLargestDebtor(bal);
   }
 
   return settlements;
