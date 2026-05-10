@@ -20,5 +20,17 @@ describe('simplifyDebts', () => {
     expect(result).toContainEqual({ from: 'b', to: 'a', amount: 20 });
     expect(result).toContainEqual({ from: 'c', to: 'a', amount: 10 });
   });
+  // CYCLE 4 — multi-créditeurs et multi-débiteurs
+  it('multi-créditeurs : répartition optimale', () => {
+    const result = simplifyDebts({ a: 10, b: 20, c: -15, d: -15 });
+    expect(result).toHaveLength(3);
+    const total = result.reduce((sum, s) => sum + s.amount, 0);
+    expect(total).toBeCloseTo(30);
+  });
+  // CYCLE 5 — tout le monde est quitte
+  it('tous les soldes à 0 → aucun settlement', () => {
+    const result = simplifyDebts({ a: 0, b: 0, c: 0 });
+    expect(result).toEqual([]);
+  });
 
 });
