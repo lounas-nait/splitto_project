@@ -32,5 +32,12 @@ describe('simplifyDebts', () => {
     const result = simplifyDebts({ a: 0, b: 0, c: 0 });
     expect(result).toEqual([]);
   });
+  // CYCLE 6 — un débiteur, plusieurs créditeurs
+  it('1 débiteur, 2 créditeurs → 2 settlements', () => {
+    const result = simplifyDebts({ a: 60, b: 40, c: -100 });
+    expect(result).toHaveLength(2);
+    expect(result).toContainEqual({ from: 'c', to: 'a', amount: 60 });
+    expect(result).toContainEqual({ from: 'c', to: 'b', amount: 40 });
+  });
 
 });
